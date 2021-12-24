@@ -53,9 +53,9 @@ func Make(config Config) AternosApi {
 	}
 }
 
-// GetPlayers returns all online players.
-func (api AternosApi) GetPlayers() ([]string, error) {
-	res, err := api.client.Get("players")
+// getDocument sends a GET request to the specified url and reads the response as a goquery.Document.
+func (api AternosApi) getDocument(url string) (*goquery.Document, error) {
+	res, err := api.client.Get(url)
 	if err != nil {
 		return nil, err
 	}
@@ -67,25 +67,24 @@ func (api AternosApi) GetPlayers() ([]string, error) {
 		return nil, err
 	}
 
-	players := make([]string, 0)
+	return document, nil
+}
 
-	document.Find("div.playername").Each(func(i int, selection *goquery.Selection) {
-		players = append(players, strings.TrimSpace(selection.Text()))
-	})
+// GetPlayers returns all online players.
+func (api AternosApi) GetPlayers() ([]string, error) {
+	document, err := api.getDocument("players")
+	if err != nil {
+		return nil, err
+	}
+
+	players := findList(document, "div.playername")
 
 	return players, nil
 }
 
 // GetServerInfo returns server information.
 func (api AternosApi) GetServerInfo() (ServerInfo, error) {
-	res, err := api.client.Get("server")
-	if err != nil {
-		return ServerInfo{}, err
-	}
-
-	defer res.Close()
-
-	document, err := goquery.NewDocumentFromReader(res.Body)
+	document, err := api.getDocument("server")
 	if err != nil {
 		return ServerInfo{}, err
 	}
