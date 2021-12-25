@@ -9,51 +9,61 @@ import (
 	"github.com/sleeyax/gotcha/adapters/fhttp"
 	httpx "github.com/useflyent/fhttp"
 	"net/http"
+	"net/http/cookiejar"
+	"net/url"
 	"strings"
 	"time"
 )
 
 type AternosApi struct {
-	Config
+	*Options
 	client *gotcha.Client
-	sec    string
+	// ajax security token.
+	sec string
+	// ajax token.
+	token string
 }
 
-// Make allocates a new Aternos API instance.
-func Make(config Config) AternosApi {
+// New allocates a new Aternos API instance.
+func New(options *Options) *AternosApi {
+	jar, _ := cookiejar.New(&cookiejar.Options{})
+
+	var adapter gotcha.Adapter
+	if options.Proxy != nil {
+		adapter = &fhttp.Adapter{Transport: &httpx.Transport{
+			Proxy: httpx.ProxyURL(options.Proxy),
+		}}
+	} else {
+		adapter = fhttp.NewAdapter()
+	}
+
 	client, _ := gotcha.NewClient(&gotcha.Options{
-		Adapter:   fhttp.NewAdapter(),
+		Adapter:   adapter,
 		PrefixURL: "https://aternos.org/",
 		Headers: http.Header{
 			"user-agent":         {"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36"},
 			"accept":             {"text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9"},
 			"accept-language":    {"en-US,en;q=0.9"},
 			"accept-encoding":    {"gzip, deflate, br"},
-			"cookie":             config.Cookies,
+			"cookie":             nil,
 			httpx.HeaderOrderKey: []string{"user-agent", "accept", "accept-language", "accept-encoding", "cookie"},
 		},
+		CookieJar:      jar,
 		FollowRedirect: false,
 		Retry:          false,
 	})
 
-	// TODO: improve cookie api; just pass a map[string][]string.
-	var sec string
-	for _, v := range config.Cookies {
-		prefix := "ATERNOS_SEC_"
-		if strings.HasPrefix(v, prefix) {
-			sec = strings.ReplaceAll(strings.ReplaceAll(v, prefix, ""), "=", "%3A")
-		}
-	}
+	u, _ := url.Parse(client.Options.PrefixURL)
+	jar.SetCookies(u, options.Cookies)
 
-	return AternosApi{
-		Config: config,
-		client: client,
-		sec:    sec,
+	return &AternosApi{
+		Options: options,
+		client:  client,
 	}
 }
 
 // getDocument sends a GET request to the specified url and reads the response as a goquery.Document.
-func (api AternosApi) getDocument(url string) (*goquery.Document, error) {
+func (api *AternosApi) getDocument(url string) (*goquery.Document, error) {
 	res, err := api.client.Get(url)
 	if err != nil {
 		return nil, err
@@ -69,8 +79,48 @@ func (api AternosApi) getDocument(url string) (*goquery.Document, error) {
 	return document, nil
 }
 
+// genSec generates an AJAX security token called SEC.
+func (api *AternosApi) genSec() {
+	key := randomString(11) + "00000"
+	value := randomString(11) + "00000"
+
+	api.sec = fmt.Sprintf("%s:%s", key, value)
+	api.client.Options.CookieJar.SetCookies(api.client.Options.FullUrl, []*http.Cookie{
+		{
+			Name:  fmt.Sprintf("ATERNOS_SEC_%s", key),
+			Value: value,
+		},
+	})
+}
+
+// extractToken extracts the AJAX TOKEN from given HTML document.
+func (api *AternosApi) extractToken(document *goquery.Document) {
+	document.Find("script[type='text/javascript']").EachWithBreak(func(i int, selection *goquery.Selection) bool {
+		// TODO: eval JS or improve because the script is dynamic
+		// (() => {window[("AJAX_" + "TOKE" + "N")]=atob('d0lvUUZpdUdYaEtnUTZybUVrUlg=');})();
+		script := selection.Text()
+
+		if !strings.Contains(script, "AJAX") {
+			return true
+		}
+
+		var token string
+
+		// find concat expression e.g. "wI" + "oQFiuGXhK" + "gQ6rmEk" + "RX"
+		tokenSum := getStringInBetween(script, "]=(", ");}")
+		split := strings.Split(tokenSum, "+")
+		for _, s := range split {
+			token += strings.TrimSpace(strings.Trim(s, "\""))
+		}
+
+		api.token = token
+
+		return false
+	})
+}
+
 // GetServerInfo returns server information.
-func (api AternosApi) GetServerInfo() (ServerInfo, error) {
+func (api *AternosApi) GetServerInfo() (ServerInfo, error) {
 	var info ServerInfo
 	var err error
 
@@ -94,13 +144,16 @@ func (api AternosApi) GetServerInfo() (ServerInfo, error) {
 		return false
 	})
 
+	api.genSec()
+	api.extractToken(document)
+
 	return info, err
 }
 
 // TODO: start & stop server over websockets (wss://aternos.org/hermes/)
 
 // StartServer starts your Minecraft server.
-func (api AternosApi) StartServer() error {
+func (api *AternosApi) StartServer() error {
 	info, err := api.GetServerInfo()
 	if err != nil {
 		return err
@@ -110,7 +163,7 @@ func (api AternosApi) StartServer() error {
 		return ServerAlreadyStartedError
 	}
 
-	res, err := api.client.Get(fmt.Sprintf("panel/ajax/start.php?headstart=0&access-credits=0&SEC=%s&TOKEN=%s", api.sec, api.Token))
+	res, err := api.client.Get(fmt.Sprintf("panel/ajax/start.php?headstart=0&access-credits=0&SEC=%s&TOKEN=%s", api.sec, api.token))
 	if err != nil {
 		return err
 	}
@@ -130,10 +183,9 @@ func (api AternosApi) StartServer() error {
 
 // ConfirmServer sends a confirmation that 'you're still active' while waiting for the server to start.
 // You should call this function right after starting the server.
-// This might not always be required anymore though.
 //
 // delay specifies the amount of seconds to wait before submitting the confirmation.
-func (api AternosApi) ConfirmServer(delay time.Duration) error {
+func (api *AternosApi) ConfirmServer(delay time.Duration) error {
 	for {
 		time.Sleep(delay)
 
@@ -145,11 +197,10 @@ func (api AternosApi) ConfirmServer(delay time.Duration) error {
 		status := info.Status
 
 		if status != Preparing && status != Online {
-			res, err := api.client.Get(fmt.Sprintf("panel/ajax/confirm.php?headstart=0&access-credits=0&SEC=%s&TOKEN=%s", api.sec, api.Token))
+			res, err := api.client.Get(fmt.Sprintf("panel/ajax/confirm.php?headstart=0&access-credits=0&SEC=%s&TOKEN=%s", api.sec, api.token))
 			if err != nil {
 				return err
 			}
-
 			res.Close()
 		} else {
 			break
@@ -161,7 +212,7 @@ func (api AternosApi) ConfirmServer(delay time.Duration) error {
 
 // StopServer stops the minecraft server.
 // This function doesn't wait until the server is fully stopped, it only requests a shutdown.
-func (api AternosApi) StopServer() error {
+func (api *AternosApi) StopServer() error {
 	info, err := api.GetServerInfo()
 	if err != nil {
 		return err
@@ -171,7 +222,7 @@ func (api AternosApi) StopServer() error {
 		return ServerAlreadyStoppedError
 	}
 
-	_, err = api.client.Get(fmt.Sprintf("panel/ajax/stop.php?SEC=%s&TOKEN=%s", api.sec, api.Token))
+	_, err = api.client.Get(fmt.Sprintf("panel/ajax/stop.php?SEC=%s&TOKEN=%s", api.sec, api.token))
 
 	return err
 }

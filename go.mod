@@ -5,7 +5,7 @@ go 1.17
 require (
 	github.com/PuerkitoBio/goquery v1.8.0
 	github.com/sleeyax/gotcha v0.0.2
-	github.com/sleeyax/gotcha/adapters/fhttp v0.0.0-20210901163049-0eb05921fa56
+	github.com/sleeyax/gotcha/adapters/fhttp v0.0.0-20211225143732-1ae0bde30de1
 	github.com/useflyent/fhttp v0.0.0-20210801005649-f160dd923789
 )
 
