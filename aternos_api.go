@@ -13,9 +13,6 @@ import (
 	"time"
 )
 
-var ServerAlreadyStartedError = errors.New("Server already running!")
-var ServerAlreadyStoppedError = errors.New("Server already stopped!")
-
 type AternosApi struct {
 	Config
 	client *gotcha.Client
@@ -39,6 +36,7 @@ func Make(config Config) AternosApi {
 		Retry:          false,
 	})
 
+	// TODO: improve cookie api; just pass a map[string][]string.
 	var sec string
 	for _, v := range config.Cookies {
 		prefix := "ATERNOS_SEC_"
