@@ -1,6 +1,7 @@
 package aternos_api
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
@@ -84,20 +85,30 @@ func (api AternosApi) GetPlayers() ([]string, error) {
 
 // GetServerInfo returns server information.
 func (api AternosApi) GetServerInfo() (ServerInfo, error) {
+	var info ServerInfo
+	var err error
+
 	document, err := api.getDocument("server")
 	if err != nil {
 		return ServerInfo{}, err
 	}
 
-	info := ServerInfo{
-		Status:   strings.TrimSpace(document.Find("span.statuslabel-label").First().Text()),
-		Software: strings.TrimSpace(document.Find("span#software").First().Text()),
-		Address:  strings.TrimSpace(document.Find("span#ip").First().Text()),
-		// TODO: port
-		Version: strings.TrimSpace(document.Find("span#version").First().Text()),
-	}
+	document.Find("script:not([src])").EachWithBreak(func(i int, selection *goquery.Selection) bool {
+		script := strings.TrimSpace(selection.Text())
+		prefix := "var lastStatus ="
+		suffix := ";"
 
-	return info, nil
+		if !strings.HasPrefix(script, prefix) {
+			return true
+		}
+
+		data := strings.TrimSuffix(strings.ReplaceAll(script, prefix, ""), suffix)
+		err = json.Unmarshal([]byte(data), &info)
+
+		return false
+	})
+
+	return info, err
 }
 
 // TODO: start & stop server over websockets (wss://aternos.org/hermes/)
@@ -109,7 +120,7 @@ func (api AternosApi) StartServer() error {
 		return err
 	}
 
-	if info.Status == "Online" {
+	if info.Status == Online {
 		return ServerAlreadyStartedError
 	}
 
@@ -147,7 +158,7 @@ func (api AternosApi) ConfirmServer(delay time.Duration) error {
 
 		status := info.Status
 
-		if status != "Preparing" && status != "Online" {
+		if status != Preparing && status != Online {
 			res, err := api.client.Get(fmt.Sprintf("panel/ajax/confirm.php?headstart=0&access-credits=0&SEC=%s&TOKEN=%s", api.sec, api.Token))
 			if err != nil {
 				return err
@@ -170,7 +181,7 @@ func (api AternosApi) StopServer() error {
 		return err
 	}
 
-	if info.Status == "Offline" {
+	if info.Status == Offline {
 		return ServerAlreadyStoppedError
 	}
 
