@@ -69,18 +69,6 @@ func (api AternosApi) getDocument(url string) (*goquery.Document, error) {
 	return document, nil
 }
 
-// GetPlayers returns all online players.
-func (api AternosApi) GetPlayers() ([]string, error) {
-	document, err := api.getDocument("players")
-	if err != nil {
-		return nil, err
-	}
-
-	players := findList(document, "div.playername")
-
-	return players, nil
-}
-
 // GetServerInfo returns server information.
 func (api AternosApi) GetServerInfo() (ServerInfo, error) {
 	var info ServerInfo
