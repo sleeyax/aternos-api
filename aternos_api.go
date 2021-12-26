@@ -100,12 +100,7 @@ func (api *AternosApi) extractToken(document *goquery.Document) error {
 
 	document.Find("script[type='text/javascript']").EachWithBreak(func(i int, selection *goquery.Selection) bool {
 		script = strings.TrimSpace(selection.Text())
-
-		if !strings.Contains(script, "window") {
-			return true
-		}
-
-		return false
+		return !strings.Contains(script, "window")
 	})
 
 	if script == "" {
@@ -132,35 +127,32 @@ func (api *AternosApi) extractToken(document *goquery.Document) error {
 
 // GetServerInfo returns server information.
 func (api *AternosApi) GetServerInfo() (ServerInfo, error) {
-	var info ServerInfo
-	var err error
-
 	document, err := api.getDocument("server")
 	if err != nil {
 		return ServerInfo{}, err
 	}
 
+	var script string
+	var info ServerInfo
+	prefix := "var lastStatus ="
+	suffix := ";"
+
 	document.Find("script:not([src])").EachWithBreak(func(i int, selection *goquery.Selection) bool {
-		script := strings.TrimSpace(selection.Text())
-		prefix := "var lastStatus ="
-		suffix := ";"
-
-		if !strings.HasPrefix(script, prefix) {
-			return true
-		}
-
-		data := strings.TrimSuffix(strings.ReplaceAll(script, prefix, ""), suffix)
-		err = json.Unmarshal([]byte(data), &info)
-
-		return false
+		script = strings.TrimSpace(selection.Text())
+		return !strings.HasPrefix(script, prefix)
 	})
 
-	if err != nil {
+	if script == "" {
+		return ServerInfo{}, errors.New("failed to find server info")
+	}
+
+	data := strings.TrimSuffix(strings.ReplaceAll(script, prefix, ""), suffix)
+	if err = json.Unmarshal([]byte(data), &info); err != nil {
 		return ServerInfo{}, err
 	}
 
 	api.genSec()
-	api.extractToken(document)
+	err = api.extractToken(document)
 
 	return info, err
 }
@@ -200,6 +192,7 @@ func (api *AternosApi) StartServer() error {
 // You should call this function right after starting the server.
 //
 // delay specifies the amount of seconds to wait before submitting the confirmation.
+// Recommended to wait ~10 seconds.
 func (api *AternosApi) ConfirmServer(delay time.Duration) error {
 	for {
 		time.Sleep(delay)
