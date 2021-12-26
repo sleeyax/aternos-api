@@ -1,6 +1,7 @@
 package aternos_api
 
 import (
+	"encoding/base64"
 	"github.com/PuerkitoBio/goquery"
 	"math/rand"
 	"strings"
@@ -55,4 +56,12 @@ func getStringInBetween(str string, left string, right string) string {
 	}
 
 	return str[s:e]
+}
+
+func atob(encoded string) (string, error) {
+	decoded, err := base64.StdEncoding.DecodeString(encoded)
+	if err != nil {
+		return "", err
+	}
+	return string(decoded), nil
 }

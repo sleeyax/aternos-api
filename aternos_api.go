@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
+	"github.com/dop251/goja"
 	"github.com/sleeyax/gotcha"
 	"github.com/sleeyax/gotcha/adapters/fhttp"
 	httpx "github.com/useflyent/fhttp"
@@ -93,30 +94,40 @@ func (api *AternosApi) genSec() {
 	})
 }
 
-// extractToken extracts the AJAX TOKEN from given HTML document.
-func (api *AternosApi) extractToken(document *goquery.Document) {
-	document.Find("script[type='text/javascript']").EachWithBreak(func(i int, selection *goquery.Selection) bool {
-		// TODO: eval JS or improve because the script is dynamic
-		// (() => {window[("AJAX_" + "TOKE" + "N")]=atob('d0lvUUZpdUdYaEtnUTZybUVrUlg=');})();
-		script := selection.Text()
+// extractToken extracts and unpacks the AJAX TOKEN from given HTML document.
+func (api *AternosApi) extractToken(document *goquery.Document) error {
+	var script string
 
-		if !strings.Contains(script, "AJAX") {
+	document.Find("script[type='text/javascript']").EachWithBreak(func(i int, selection *goquery.Selection) bool {
+		script = strings.TrimSpace(selection.Text())
+
+		if !strings.Contains(script, "window") {
 			return true
 		}
 
-		var token string
-
-		// find concat expression e.g. "wI" + "oQFiuGXhK" + "gQ6rmEk" + "RX"
-		tokenSum := getStringInBetween(script, "]=(", ");}")
-		split := strings.Split(tokenSum, "+")
-		for _, s := range split {
-			token += strings.TrimSpace(strings.Trim(s, "\""))
-		}
-
-		api.token = token
-
 		return false
 	})
+
+	if script == "" {
+		return errors.New("failed to find token")
+	}
+
+	vm := goja.New()
+
+	if err := vm.Set("atob", atob); err != nil {
+		return err
+	}
+
+	script = fmt.Sprintf("window = {}; %s window['AJAX_TOKEN'];", script)
+
+	v, err := vm.RunString(script)
+	if err != nil {
+		return err
+	}
+
+	api.token = v.String()
+
+	return nil
 }
 
 // GetServerInfo returns server information.
@@ -143,6 +154,10 @@ func (api *AternosApi) GetServerInfo() (ServerInfo, error) {
 
 		return false
 	})
+
+	if err != nil {
+		return ServerInfo{}, err
+	}
 
 	api.genSec()
 	api.extractToken(document)
