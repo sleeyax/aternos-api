@@ -6,7 +6,7 @@ import (
 )
 
 type Options struct {
-	// Initial authorization cookies.
+	// Initial authentication cookies.
 	//
 	// It must include at least ATERNOS_SESSION, ATERNOS_SERVER.
 	//

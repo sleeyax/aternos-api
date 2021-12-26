@@ -17,8 +17,8 @@ import (
 )
 
 type AternosApi struct {
-	*Options
-	client *gotcha.Client
+	options *Options
+	client  *gotcha.Client
 	// ajax security token.
 	sec string
 	// ajax token.
@@ -58,7 +58,7 @@ func New(options *Options) *AternosApi {
 	jar.SetCookies(u, options.Cookies)
 
 	return &AternosApi{
-		Options: options,
+		options: options,
 		client:  client,
 	}
 }
@@ -204,7 +204,7 @@ func (api *AternosApi) ConfirmServer(delay time.Duration) error {
 
 		status := info.Status
 
-		if status != Preparing && status != Online {
+		if status != Online {
 			res, err := api.client.Get(fmt.Sprintf("panel/ajax/confirm.php?headstart=0&access-credits=0&SEC=%s&TOKEN=%s", api.sec, api.token))
 			if err != nil {
 				return err
@@ -233,4 +233,12 @@ func (api *AternosApi) StopServer() error {
 	_, err = api.client.Get(fmt.Sprintf("panel/ajax/stop.php?SEC=%s&TOKEN=%s", api.sec, api.token))
 
 	return err
+}
+
+// GetCookies returns the current authentication cookies that are being used.
+//
+// You can use this function to export them (to for example a .txt file) so you can resume the session later.
+func (api *AternosApi) GetCookies() []*http.Cookie {
+	u, _ := url.Parse(api.client.Options.PrefixURL)
+	return api.client.Options.CookieJar.Cookies(u)
 }
