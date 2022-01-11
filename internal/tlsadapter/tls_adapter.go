@@ -16,18 +16,13 @@ type TLSAdapter struct {
 	// Defaults to tls.HelloCustom.
 	Fingerprint tls.ClientHelloID
 
-	// Optional custom client hello specification to use.
-	// When specified, Fingerprint should be set to tls.HelloCustom.
-	// Defaults to a custom Chrome 96 spec.
-	ClientHelloSpec *tls.ClientHelloSpec
-
 	// Optional TLS configuration to use.
 	Config *tls.Config
 }
 
 // New creates a new gotcha adapter configured with a Chrome 96 browser TLS fingerprint.
 func New(config *tls.Config) *TLSAdapter {
-	return &TLSAdapter{Fingerprint: tls.HelloCustom, ClientHelloSpec: CustomClientHelloSpec, Config: config}
+	return &TLSAdapter{Fingerprint: tls.HelloCustom, Config: config}
 }
 
 // DoRequest executes a HTTP 1 request and returns its response.
@@ -36,8 +31,7 @@ func (ua *TLSAdapter) DoRequest(options *gotcha.Options) (*gotcha.Response, erro
 		Proxy: func(*fhttp.Request) (*url.URL, error) {
 			return options.Proxy, nil
 		},
-		// TODO: fix
-		//DialTLSContext:      ua.DialTLSContext,
+		DialTLSContext:      ua.DialTLSContext,
 		MaxConnsPerHost:     1,
 		MaxIdleConns:        1,
 		MaxIdleConnsPerHost: 1,
@@ -54,10 +48,10 @@ func (ua *TLSAdapter) DialTLSContext(_ context.Context, network string, addr str
 		return nil, err
 	}
 
-	uconn := tls.UClient(conn, ua.Config, ua.Fingerprint)
+	uconn := tls.UClient(conn, ua.Config.Clone(), ua.Fingerprint)
 
 	if ua.Fingerprint == tls.HelloCustom {
-		if err = uconn.ApplyPreset(ua.ClientHelloSpec); err != nil {
+		if err = uconn.ApplyPreset(GetCustomClientHelloSpec()); err != nil {
 			return nil, err
 		}
 	}
