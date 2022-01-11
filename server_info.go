@@ -75,7 +75,7 @@ type ServerInfo struct {
 	// E.g vanilla, papermc.
 	SoftwareType string `json:"type"`
 
-	// Current minecraft version.
+	// Current Minecraft version.
 	Version string `json:"version"`
 
 	IsDeprecated bool `json:"deprecated"`

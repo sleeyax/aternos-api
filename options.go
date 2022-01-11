@@ -15,4 +15,8 @@ type Options struct {
 
 	// Optional HTTP proxy to use.
 	Proxy *url.URL
+
+	// Disables server SSL certificate checks.
+	// It's recommended to enable this only for debugging purposes, such as debugging traffic with a web debugging/HTTP/MITM proxy.
+	InsecureSkipVerify bool
 }

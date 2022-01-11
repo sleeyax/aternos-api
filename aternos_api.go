@@ -1,12 +1,13 @@
 package aternos_api
 
 import (
+	tls "github.com/refraction-networking/utls"
+	"github.com/sleeyax/aternos-api/internal/tlsadapter"
 	"github.com/sleeyax/gotcha"
-	"github.com/sleeyax/gotcha/adapters/fhttp"
-	httpx "github.com/useflyent/fhttp"
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
+	"strings"
 )
 
 type AternosApi struct {
@@ -22,29 +23,29 @@ type AternosApi struct {
 func New(options *Options) *AternosApi {
 	jar, _ := cookiejar.New(&cookiejar.Options{})
 
-	var adapter gotcha.Adapter
-	if options.Proxy != nil {
-		adapter = &fhttp.Adapter{Transport: &httpx.Transport{
-			Proxy: httpx.ProxyURL(options.Proxy),
-		}}
-	} else {
-		adapter = fhttp.NewAdapter()
-	}
+	adapter := tlsadapter.New(&tls.Config{ServerName: "aternos.org", InsecureSkipVerify: options.InsecureSkipVerify})
 
 	client, _ := gotcha.NewClient(&gotcha.Options{
 		Adapter:   adapter,
 		PrefixURL: "https://aternos.org/",
 		Headers: http.Header{
-			"user-agent":         {"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36"},
-			"accept":             {"text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9"},
-			"accept-language":    {"en-US,en;q=0.9"},
-			"accept-encoding":    {"gzip, deflate, br"},
-			"cookie":             nil,
-			httpx.HeaderOrderKey: []string{"user-agent", "accept", "accept-language", "accept-encoding", "cookie"},
+			"User-Agent":      {"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36"},
+			"Accept":          {"*/*"},
+			"Accept-Language": {"en-US,en;q=0.9"},
 		},
 		CookieJar:      jar,
 		FollowRedirect: false,
 		Retry:          false,
+		Hooks: gotcha.Hooks{
+			AfterResponse: []gotcha.AfterResponseHook{
+				func(response *gotcha.Response, retry gotcha.RetryFunc) (*gotcha.Response, error) {
+					if location := response.Header.Get("location"); strings.Contains(location, "go") {
+						return response, UnauthenticatedError
+					}
+					return response, nil
+				},
+			},
+		},
 	})
 
 	u, _ := url.Parse(client.Options.PrefixURL)

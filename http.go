@@ -106,8 +106,6 @@ func (api *AternosApi) GetServerInfo() (ServerInfo, error) {
 	return info, err
 }
 
-// TODO: start & stop server over websockets (wss://aternos.org/hermes/)
-
 // StartServer starts your Minecraft server over HTTP.
 func (api *AternosApi) StartServer() error {
 	info, err := api.GetServerInfo()
@@ -167,7 +165,7 @@ func (api *AternosApi) ConfirmServer(delay time.Duration) error {
 	return nil
 }
 
-// StopServer stops the minecraft server over HTTP.
+// StopServer stops the Minecraft server over HTTP.
 // This function doesn't wait until the server is fully stopped, it only requests a shutdown.
 func (api *AternosApi) StopServer() error {
 	info, err := api.GetServerInfo()
