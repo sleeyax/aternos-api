@@ -71,6 +71,7 @@ func (w *Websocket) StopConsoleLogStream() error {
 }
 
 // StartHeapInfoStream starts fetching information about the server heap.
+// See https://www.javatpoint.com/java-heap for more information about heaps.
 func (w *Websocket) StartHeapInfoStream() error {
 	return w.Send(WebsocketMessage{
 		Stream: "heap",
@@ -79,6 +80,7 @@ func (w *Websocket) StartHeapInfoStream() error {
 }
 
 // StopHeapInfoStream stops fetching information about the server heap.
+// See https://www.javatpoint.com/java-heap for more information about heaps.
 func (w *Websocket) StopHeapInfoStream() error {
 	return w.Send(WebsocketMessage{
 		Stream: "heap",
@@ -86,8 +88,8 @@ func (w *Websocket) StopHeapInfoStream() error {
 	})
 }
 
-// StartTickStream starts streaming the time left for someone to join the server.
-// Once the timer runs out and no one has joined the server, it will be stopped automatically.
+// StartTickStream starts streaming the current server tick count.
+// See https://minecraft.fandom.com/wiki/Tick for more information about ticks.
 func (w *Websocket) StartTickStream() error {
 	return w.Send(WebsocketMessage{
 		Stream: "tick",
@@ -95,8 +97,8 @@ func (w *Websocket) StartTickStream() error {
 	})
 }
 
-// StopTickStream stops streaming the time left for someone to join the server.
-// Once the timer runs out and no one has joined the server, it will be stopped automatically.
+// StopTickStream stops streaming the current server tick count.
+// See https://minecraft.fandom.com/wiki/Tick for more information about ticks.
 func (w *Websocket) StopTickStream() error {
 	return w.Send(WebsocketMessage{
 		Stream: "tick",

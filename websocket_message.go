@@ -5,6 +5,6 @@ type WebsocketMessage struct {
 	Type         string `json:"type,omitempty"`
 	Message      string `json:"Message,omitempty"`
 	MessageBytes []byte `json:"-"`
-	Data         string `json:"data,omitempty"`
+	Data         Data   `json:"data,omitempty"`
 	Console      string `json:"console,omitempty"`
 }
