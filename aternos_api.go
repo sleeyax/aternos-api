@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-type AternosApi struct {
+type Api struct {
 	options *Options
 	client  *gotcha.Client
 	// ajax security token.
@@ -20,7 +20,7 @@ type AternosApi struct {
 }
 
 // New allocates a new Aternos API instance.
-func New(options *Options) *AternosApi {
+func New(options *Options) *Api {
 	jar, _ := cookiejar.New(&cookiejar.Options{})
 
 	adapter := tlsadapter.New(&tls.Config{ServerName: "aternos.org", InsecureSkipVerify: options.InsecureSkipVerify})
@@ -51,7 +51,7 @@ func New(options *Options) *AternosApi {
 	u, _ := url.Parse(client.Options.PrefixURL)
 	jar.SetCookies(u, options.Cookies)
 
-	return &AternosApi{
+	return &Api{
 		options: options,
 		client:  client,
 	}

@@ -13,7 +13,7 @@ import (
 )
 
 // getDocument sends a GET request to the specified url and reads the response as a goquery.Document.
-func (api *AternosApi) getDocument(url string) (*goquery.Document, error) {
+func (api *Api) getDocument(url string) (*goquery.Document, error) {
 	res, err := api.client.Get(url)
 	if err != nil {
 		return nil, err
@@ -30,7 +30,7 @@ func (api *AternosApi) getDocument(url string) (*goquery.Document, error) {
 }
 
 // genSec generates an AJAX security token called SEC.
-func (api *AternosApi) genSec() {
+func (api *Api) genSec() {
 	key := randomString(11) + "00000"
 	value := randomString(11) + "00000"
 
@@ -44,7 +44,7 @@ func (api *AternosApi) genSec() {
 }
 
 // extractToken extracts and unpacks the AJAX TOKEN from given HTML document.
-func (api *AternosApi) extractToken(document *goquery.Document) error {
+func (api *Api) extractToken(document *goquery.Document) error {
 	var script string
 
 	document.Find("script[type='text/javascript']").EachWithBreak(func(i int, selection *goquery.Selection) bool {
@@ -75,7 +75,7 @@ func (api *AternosApi) extractToken(document *goquery.Document) error {
 }
 
 // GetServerInfo fetches all server information over HTTP.
-func (api *AternosApi) GetServerInfo() (ServerInfo, error) {
+func (api *Api) GetServerInfo() (ServerInfo, error) {
 	document, err := api.getDocument("server")
 	if err != nil {
 		return ServerInfo{}, err
@@ -107,7 +107,7 @@ func (api *AternosApi) GetServerInfo() (ServerInfo, error) {
 }
 
 // StartServer starts your Minecraft server over HTTP.
-func (api *AternosApi) StartServer() error {
+func (api *Api) StartServer() error {
 	info, err := api.GetServerInfo()
 	if err != nil {
 		return err
@@ -140,7 +140,7 @@ func (api *AternosApi) StartServer() error {
 //
 // delay specifies the amount of seconds to wait before submitting the confirmation.
 // Recommended to wait ~10 seconds.
-func (api *AternosApi) ConfirmServer(delay time.Duration) error {
+func (api *Api) ConfirmServer(delay time.Duration) error {
 	for {
 		time.Sleep(delay)
 
@@ -167,7 +167,7 @@ func (api *AternosApi) ConfirmServer(delay time.Duration) error {
 
 // StopServer stops the Minecraft server over HTTP.
 // This function doesn't wait until the server is fully stopped, it only requests a shutdown.
-func (api *AternosApi) StopServer() error {
+func (api *Api) StopServer() error {
 	info, err := api.GetServerInfo()
 	if err != nil {
 		return err
@@ -185,7 +185,7 @@ func (api *AternosApi) StopServer() error {
 // GetCookies returns the current authentication cookies that are being used.
 //
 // You can use this function to export them (to for example a .txt file) so you can resume the session later.
-func (api *AternosApi) GetCookies() []*http.Cookie {
+func (api *Api) GetCookies() []*http.Cookie {
 	u, _ := url.Parse(api.client.Options.PrefixURL)
 	return api.client.Options.CookieJar.Cookies(u)
 }
