@@ -28,7 +28,7 @@ func main() {
 		fmt.Println()
 		flag.PrintDefaults()
 		fmt.Println()
-		fmt.Println("Example: ./aternos.exe -lang en -proxy http://127.0.0.1:8888 -server a6liGFpEBjF1LvIS -session a6HBs6rMiHJvDHxQQfCDKQQmutFSWgIJhQVgzaPOSvr6TCXtdZMPKIlGjqubur80l2AYp9r9seRMilWHznPv05U9mVPCiPm8we2e")
+		fmt.Println("Example: aternos-api -lang en -proxy http://127.0.0.1:8888 -server a6liGFpEBjF1LvIS -session a6HBs6rMiHJvDHxQQfCDKQQmutFSWgIJhQVgzaPOSvr6TCXtdZMPKIlGjqubur80l2AYp9r9seRMilWHznPv05U9mVPCiPm8we2e")
 		os.Exit(0)
 	}
 
@@ -147,6 +147,7 @@ func main() {
 			}
 		// Quits when CTRL + C is pressed.
 		case <-aternos.InterruptSignal:
+			// TODO: stop server and quit when actually stopped
 			return
 		}
 	}

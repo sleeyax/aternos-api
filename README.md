@@ -16,7 +16,7 @@ This project also comes with a simple command line application to start and stop
 Installation & usage:
 ```
 $ go install github.com/sleeyax/aternos-api
-$ aternos-api -h
+$ aternos-api
 ```
 
 ## Projects
