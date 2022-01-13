@@ -10,7 +10,6 @@ import (
 	"net/url"
 	"os"
 	"strings"
-	"time"
 )
 
 func main() {
@@ -80,7 +79,7 @@ func main() {
 				}
 
 				// Run a goroutine in the background that sends a bunch of keep-alive requests at intervals.
-				go sendHearthBeats(wss)
+				go wss.SendHearthBeats()
 			case "status":
 				// Current server status, containing a bunch of other useful info such as IP address/Dyn IP to connect to, amount of active players, detected problems etc.
 				var serverInfo aternos.ServerInfo
@@ -150,14 +149,6 @@ func main() {
 		case <-aternos.InterruptSignal:
 			return
 		}
-	}
-}
-
-// sendHearthBeats keeps sending keep-alive requests at an interval.
-func sendHearthBeats(wss *aternos.Websocket) {
-	for {
-		wss.SendHeartBeat()
-		time.Sleep(time.Millisecond * 49000)
 	}
 }
 

@@ -114,6 +114,26 @@ func (w *Websocket) SendHeartBeat() error {
 	})
 }
 
+// SendHearthBeats keeps sending keep-alive requests at a specified interval.
+// If no interval is specified, a default is used.
+// It's recommended to use the default value unless you have a good reason not to do so.
+//
+// See Websocket.SendHeartBeat for more information.
+func (w *Websocket) SendHearthBeats(duration ...time.Duration) {
+	d := time.Millisecond * 49000
+	if len(duration) > 0 {
+		d = duration[0]
+	}
+
+	for {
+		if <-InterruptSignal != nil {
+			return
+		}
+		w.SendHeartBeat()
+		time.Sleep(d)
+	}
+}
+
 // startReceiver starts listening for incoming messages.
 func (w *Websocket) startReceiver() {
 	defer close(w.receiverDone)
