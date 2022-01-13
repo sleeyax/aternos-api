@@ -22,3 +22,11 @@ $ aternos-api -h
 ## Projects
 Projects that are using this package:
 * [sleeyax/aternos-discord-bot](https://github.com/sleeyax/aternos-discord-bot) (WIP)
+
+## License
+Licensed under `GNU General Public License v3.0`.
+
+[TL;DR](https://tldrlegal.com/license/gnu-general-public-license-v3-(gpl-3)):
+
+> You may copy, distribute and modify the software as long as you track changes/dates in source files. 
+> Any modifications to or software including (via compiler) GPL-licensed code must also be made available under the GPL along with build & install instructions.
