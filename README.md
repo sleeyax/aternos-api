@@ -21,4 +21,4 @@ $ aternos-api -h
 
 ## Projects
 Projects that are using this package:
-* [sleeyax/aternos-discord-bot](https://github.com/sleeyax/aternos-discord-bot)
+* [sleeyax/aternos-discord-bot](https://github.com/sleeyax/aternos-discord-bot) (WIP)
