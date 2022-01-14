@@ -56,9 +56,7 @@ type ServerInfo struct {
 	// Amount of time left to join the server.
 	Countdown int `json:"countdown"`
 
-	Queue struct {
-		Pending string `json:"pending"`
-	} `json:"queue"`
+	Queue Queue `json:"queue"`
 
 	// Unique server ID.
 	Id string `json:"id"`

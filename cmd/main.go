@@ -105,9 +105,9 @@ func main() {
 			case "queue_reduced":
 				// Waiting queue.
 				// Your server will start once it's your turn in this queue.
-				var queue aternos.Queue
+				var queue aternos.QueueReduction
 				json.Unmarshal(msg.MessageBytes, &queue)
-				log.Printf("Queue %d: %d people in queue (max time %d)\n", queue.Number, queue.Total, queue.MaxTime)
+				log.Printf("Reduced queue %d: %d people in queue (max time %d)\n", queue.Number, queue.Total, queue.MaxTime)
 			case "line":
 				// Console stream.
 				// Usually contains verbose output that is useful for logging/debugging purposes.
