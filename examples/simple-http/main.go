@@ -35,26 +35,36 @@ func main() {
 			},
 		},
 	})
+	delay := 10 * time.Second
+
+	log.Println("starting server...")
 
 	// Start the server.
 	if err := api.StartServer(); err != nil {
 		log.Fatalln(err)
 	}
 
-	log.Println("starting server...")
-
-	// Keep confirming the server every 10 seconds.
-	// Please note that these confirmations might not be required anymore in the latest version of Aternos.
-	log.Println("confirming...")
-	if err := api.ConfirmServer(10 * time.Second); err != nil {
+	// Confirm the server.
+	log.Println("Confirming...")
+	if err := api.ConfirmServer(nil, delay); err != nil {
 		log.Fatalln(err)
 	}
-	log.Println("confirmed!")
+	log.Println("Confirmed!")
 
-	// Get the current server status & info.
-	info, err := api.GetServerInfo()
-	if err != nil {
-		log.Fatal(err)
+	// Wit until the server is online.
+	var info aternos.ServerInfo
+	var err error
+	for {
+		info, err = api.GetServerInfo()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		if info.Status == aternos.Online {
+			break
+		}
+
+		time.Sleep(delay)
 	}
 
 	log.Println("server is", info.StatusLabel)
@@ -66,13 +76,11 @@ func main() {
 	// Stop the server right after it came online.
 	// Normally in a production app you wouldn't do this, of course.
 	// This is only for demonstration purposes.
-	if info.Status == aternos.Online {
-		if err = api.StopServer(); err != nil {
-			log.Fatalln(err)
-		}
-		log.Println("server is stopping...")
-		// To check whether the server has actually fully stopped, you can periodically check the status with:
-		// info, err := api.GetServerInfo()
-		// ...
+	if err = api.StopServer(); err != nil {
+		log.Fatalln(err)
 	}
+	log.Println("server is stopping...")
+	// To check whether the server has actually fully stopped, you can periodically check the status with:
+	// info, err := api.GetServerInfo()
+	// ...
 }

@@ -1,11 +1,13 @@
 package aternos_api
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/dop251/goja"
+	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -135,34 +137,50 @@ func (api *Api) StartServer() error {
 	return nil
 }
 
-// ConfirmServer sends a confirmation over HTTP that says 'you're still active' while waiting for the server to start.
-// You should call this function right after starting the server.
+// ConfirmServer sends a confirmation over HTTP to claim that 'you're still active'.
+// You should call this function once it's your turn in queue, after the server has started.
 //
-// delay specifies the amount of seconds to wait before submitting the confirmation.
-// Recommended to wait ~10 seconds.
-func (api *Api) ConfirmServer(delay time.Duration) error {
+// This function will run synchronously if no context is given (nil value).
+//
+// Delay specifies the amount of seconds to wait before submitting the next confirmation.
+// Recommended to wait time is around 10 seconds.
+func (api *Api) ConfirmServer(ctx context.Context, delay time.Duration) error {
+	isAsync := ctx != nil
+
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
 	for {
-		time.Sleep(delay)
+		select {
+		case <-ctx.Done():
+			return nil
+		default:
+			info, err := api.GetServerInfo()
+			if err != nil {
+				if isAsync {
+					log.Println("Failed to get server info while confirming server:", err)
+				}
+				return err
+			}
 
-		info, err := api.GetServerInfo()
-		if err != nil {
-			return err
-		}
+			if info.Status != Preparing {
+				time.Sleep(delay)
+				break
+			}
 
-		status := info.Status
-
-		if status != Online {
 			res, err := api.client.Get(fmt.Sprintf("panel/ajax/confirm.php?headstart=0&access-credits=0&SEC=%s&TOKEN=%s", api.sec, api.token))
 			if err != nil {
+				if isAsync {
+					log.Println("Failed to confirm server:", err)
+				}
 				return err
 			}
 			res.Close()
-		} else {
-			break
+
+			return nil
 		}
 	}
-
-	return nil
 }
 
 // StopServer stops the Minecraft server over HTTP.

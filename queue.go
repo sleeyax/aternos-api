@@ -27,7 +27,7 @@ type Queue struct {
 	Count int `json:"count"`
 
 	// Percentage in the queue is calculated based on (Position / Count) * 100.
-	Percentage int `json:"percentage"`
+	Percentage float32 `json:"percentage"`
 
 	// Status message.
 	// E.g "waiting".
