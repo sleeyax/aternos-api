@@ -21,7 +21,7 @@ $ aternos-api
 
 ## Projects
 Projects that are using this package:
-* [sleeyax/aternos-discord-bot](https://github.com/sleeyax/aternos-discord-bot) (WIP)
+* [sleeyax/aternos-discord-bot](https://github.com/sleeyax/aternos-discord-bot)
 
 ## License
 Licensed under `GNU General Public License v3.0`.
