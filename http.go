@@ -147,7 +147,7 @@ func (api *Api) StartServer() error {
 func (api *Api) ConfirmServer(ctx context.Context, delay time.Duration) error {
 	isAsync := ctx != nil
 
-	if ctx == nil {
+	if !isAsync {
 		ctx = context.Background()
 	}
 
@@ -156,12 +156,20 @@ func (api *Api) ConfirmServer(ctx context.Context, delay time.Duration) error {
 		case <-ctx.Done():
 			return nil
 		default:
-			info, err := api.GetServerInfo()
-			if err != nil {
-				if isAsync {
-					log.Println("Failed to get server info while confirming server:", err)
+			info := ServerInfo{Status: Preparing}
+
+			// When the function is called asynchronously (aka as a go routine like `go ConfirmServer()`),
+			// we'll just assume the server is known to be in a preparing state already.
+			// This reduces additional and unnecessary overhead.
+			if !isAsync {
+				var err error
+				info, err = api.GetServerInfo()
+				if err != nil {
+					if isAsync {
+						log.Println("Failed to get server info while confirming server:", err)
+					}
+					return err
 				}
-				return err
 			}
 
 			if info.Status != Preparing {
