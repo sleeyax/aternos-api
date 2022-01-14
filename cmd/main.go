@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -9,7 +10,9 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 )
 
 func main() {
@@ -65,6 +68,10 @@ func main() {
 
 	defer wss.Close() // closes the connection when the main function ends
 
+	ctx, cancel := context.WithCancel(context.Background())
+	interruptSignal := make(chan os.Signal, 1)
+	signal.Notify(interruptSignal, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
+
 	log.Println("Started websocket connection.")
 
 	for {
@@ -79,7 +86,7 @@ func main() {
 				}
 
 				// Run a goroutine in the background that sends a bunch of keep-alive requests at intervals.
-				go wss.SendHearthBeats()
+				go wss.SendHearthBeats(ctx)
 			case "status":
 				// Current server status, containing a bunch of other useful info such as IP address/Dyn IP to connect to, amount of active players, detected problems etc.
 				var serverInfo aternos.ServerInfo
@@ -101,6 +108,9 @@ func main() {
 					// Stop heap & tick stream..
 					wss.StopHeapInfoStream()
 					wss.StopTickStream()
+				case aternos.Offline:
+					cancel() // stops sending heartbeats.
+					return   // closes the connection.
 				}
 			case "queue_reduced":
 				// Waiting queue.
@@ -145,10 +155,11 @@ func main() {
 				data, _ := json.Marshal(msg)
 				fmt.Printf("Unhandled message '%s', skipping\nDump:%s\n", msg.Type, data)
 			}
-		// Quits when CTRL + C is pressed.
-		case <-aternos.InterruptSignal:
-			// TODO: stop server and quit when actually stopped
-			return
+		// Stop server & quit when CTRL + C is pressed.
+		case <-interruptSignal:
+			if err = api.StopServer(); err != nil {
+				return
+			}
 		}
 	}
 }

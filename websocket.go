@@ -10,13 +10,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"os"
 	"time"
-)
-
-var (
-	// InterruptSignal is signalled when a user quits the program by pressing CTRL + C on the keyboard.
-	InterruptSignal chan os.Signal // TODO: also check for interrupts of the HTTP API.
 )
 
 const (
@@ -39,11 +33,22 @@ func (w *Websocket) init() {
 	w.receiverDone = make(chan interface{})
 	w.Message = make(chan WebsocketMessage)
 	go w.startReceiver()
-	go w.startSender()
 }
 
 // Close closes the websocket connection.
 func (w *Websocket) Close() error {
+	// Try to tell the server the connection is about to close.
+	if err := w.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, "")); err != nil {
+		log.Println("Failed to tell the websocket server to quit:", err)
+	}
+
+	select {
+	case <-w.receiverDone:
+		log.Println("Receiver Channel Closed! Exiting....")
+	case <-time.After(time.Duration(3) * time.Second):
+		log.Println("Timeout in closing receiving channel. Exiting....")
+	}
+
 	return w.conn.Close()
 }
 
@@ -119,18 +124,22 @@ func (w *Websocket) SendHeartBeat() error {
 // It's recommended to use the default value unless you have a good reason not to do so.
 //
 // See Websocket.SendHeartBeat for more information.
-func (w *Websocket) SendHearthBeats(duration ...time.Duration) {
+func (w *Websocket) SendHearthBeats(ctx context.Context, duration ...time.Duration) {
 	d := time.Millisecond * 49000
 	if len(duration) > 0 {
 		d = duration[0]
 	}
 
+	ticker := time.NewTicker(d)
+
 	for {
-		if <-InterruptSignal != nil {
+		select {
+		case <-ctx.Done():
+			ticker.Stop()
 			return
+		case <-ticker.C:
+			w.SendHeartBeat()
 		}
-		w.SendHeartBeat()
-		time.Sleep(d)
 	}
 }
 
@@ -142,7 +151,12 @@ func (w *Websocket) startReceiver() {
 		msgType, rawMsg, err := w.conn.ReadMessage()
 
 		if err != nil {
-			log.Println("Error in receiver: ", err)
+			closeErr, ok := err.(*websocket.CloseError)
+
+			if !ok || closeErr.Code != websocket.CloseNormalClosure {
+				log.Println("Unknown error in receiver: ", err)
+			}
+
 			return
 		}
 
@@ -151,7 +165,7 @@ func (w *Websocket) startReceiver() {
 			var msg WebsocketMessage
 			if err = json.Unmarshal(rawMsg, &msg); err != nil {
 				log.Println("Receiver failed to parse msg: ", err)
-				return
+				break
 			}
 
 			if msg.Message != "" {
@@ -163,32 +177,6 @@ func (w *Websocket) startReceiver() {
 			return
 		default:
 			log.Printf("Unknown message received: %s\n", rawMsg)
-		}
-	}
-}
-
-func (w *Websocket) startSender() {
-	for {
-		select {
-		case <-InterruptSignal:
-			// We received a SIGINT (Ctrl + C). Terminate gracefully...
-			log.Println("Received SIGINT InterruptSignal signal. Closing all pending connections")
-
-			// Try to close the websocket connection.
-			// If for some reason it fails, just quit already because the receiver won't know the connection is ending.
-			if err := w.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, "")); err != nil {
-				log.Println("Sender failed to tell the websocket server to quit: ", err)
-				return
-			}
-
-			select {
-			case <-w.receiverDone:
-				log.Println("Receiver Channel Closed! Exiting....")
-			case <-time.After(time.Duration(3) * time.Second):
-				log.Println("Timeout in closing receiving channel. Exiting....")
-			}
-
-			return
 		}
 	}
 }

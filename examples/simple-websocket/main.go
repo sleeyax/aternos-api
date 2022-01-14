@@ -3,11 +3,14 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	aternos "github.com/sleeyax/aternos-api"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 )
 
 func main() {
@@ -44,6 +47,10 @@ func main() {
 
 	defer wss.Close() // closes the connection when the main function ends
 
+	ctx, cancel := context.WithCancel(context.Background())
+	interruptSignal := make(chan os.Signal, 1)
+	signal.Notify(interruptSignal, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
+
 	log.Println("Started websocket connection.")
 
 	for {
@@ -58,7 +65,7 @@ func main() {
 				}
 
 				// Run a goroutine in the background that sends a bunch of keep-alive requests at default intervals.
-				go wss.SendHearthBeats()
+				go wss.SendHearthBeats(ctx)
 			case "status":
 				// Current server status, containing a bunch of other useful info such as IP address/Dyn IP to connect to, amount of active players, detected problems etc.
 				var info aternos.ServerInfo
@@ -75,10 +82,11 @@ func main() {
 
 			}
 		// Stop the server, close the connection & quit the app when CTRL + C is pressed.
-		case <-aternos.InterruptSignal:
+		case <-interruptSignal:
 			if err = api.StopServer(); err != nil {
 				log.Println(err)
 			}
+			cancel() // stop sending heartbeats
 			return
 		}
 	}
