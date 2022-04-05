@@ -157,6 +157,7 @@ func (w *Websocket) SendHearthBeats(ctx context.Context, duration ...time.Durati
 // startReceiver starts listening for incoming messages.
 func (w *Websocket) startReceiver() {
 	defer close(w.receiverDone)
+	defer close(w.Message)
 
 	for {
 		msgType, rawMsg, err := w.conn.ReadMessage()
