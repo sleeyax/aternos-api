@@ -3,6 +3,7 @@ package aternos_api
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/gorilla/websocket"
 	"github.com/sleeyax/aternos-api/internal/tlsadapter"
 	httpx "github.com/useflyent/fhttp"
@@ -18,6 +19,9 @@ const (
 )
 
 type Websocket struct {
+	// Whether we are connected.
+	isConnected bool
+
 	// receiverDone indicates whether the receiver goroutine is done processing incoming messages.
 	// It's considered done when the channel is closed.
 	receiverDone chan interface{}
@@ -35,21 +39,28 @@ func (w *Websocket) init() {
 	go w.startReceiver()
 }
 
+// IsConnected returns whether we are connected.
+func (w *Websocket) IsConnected() bool {
+	return w.isConnected
+}
+
 // Close closes the websocket connection.
 func (w *Websocket) Close() error {
-	// Try to tell the server the connection is about to close.
+	// Try to tell the server that we want to close the connection.
 	if err := w.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, "")); err != nil {
-		log.Println("Failed to tell the websocket server to quit:", err)
+		return fmt.Errorf("failed send close message: %e", err)
 	}
+
+	w.isConnected = false
 
 	select {
 	case <-w.receiverDone:
 		log.Println("Receiver Channel Closed! Exiting....")
+		return nil
 	case <-time.After(time.Duration(3) * time.Second):
-		log.Println("Timeout in closing receiving channel. Exiting....")
+		log.Println("Timeout in closing receiving channel. Exiting by force....")
+		return w.conn.Close()
 	}
-
-	return w.conn.Close()
 }
 
 // Send sends a message over the websocket connection.
@@ -157,6 +168,8 @@ func (w *Websocket) startReceiver() {
 				log.Println("Unknown error in receiver: ", err)
 			}
 
+			w.isConnected = !ok
+
 			return
 		}
 
@@ -174,6 +187,7 @@ func (w *Websocket) startReceiver() {
 
 			w.Message <- msg
 		case websocket.CloseMessage:
+			w.isConnected = false
 			return
 		default:
 			log.Printf("Unknown message received: %s\n", rawMsg)
@@ -208,7 +222,7 @@ func (api *Api) ConnectWebSocket() (*Websocket, error) {
 		return nil, err
 	}
 
-	wss := &Websocket{conn: conn}
+	wss := &Websocket{conn: conn, isConnected: true}
 	wss.init()
 
 	return wss, nil
