@@ -8,7 +8,7 @@ By using this package you are automatically breaking the [TOS](https://aternos.g
 
 ## Usage
 ### Library
-See [examples](./examples) (easy) or the [CLI source code](./cmd) (advanced).
+See [examples](./examples) (easy) or the [CLI source code](./cmd) (advanced). See also the auto-generated pkg.go.dev reference documentation [here](https://pkg.go.dev/github.com/sleeyax/aternos-api).
 
 ### CLI
 This project also comes with a simple command line application to start and stop your server.
