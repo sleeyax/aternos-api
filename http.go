@@ -31,7 +31,7 @@ func (api *Api) getDocument(url string) (*goquery.Document, error) {
 	return document, nil
 }
 
-// genSec generates an AJAX security token called SEC.
+// genSec generates a security token called SEC.
 func (api *Api) genSec() {
 	key := randomString(11) + "00000"
 	value := randomString(11) + "00000"
@@ -45,8 +45,8 @@ func (api *Api) genSec() {
 	})
 }
 
-// extractToken extracts and unpacks the AJAX TOKEN from given HTML document.
-func (api *Api) extractToken(document *goquery.Document) error {
+// extractAjaxToken extracts and unpacks the AJAX TOKEN from given HTML document.
+func (api *Api) extractAjaxToken(document *goquery.Document) error {
 	var script string
 
 	document.Find("script[type='text/javascript']").EachWithBreak(func(i int, selection *goquery.Selection) bool {
@@ -64,7 +64,8 @@ func (api *Api) extractToken(document *goquery.Document) error {
 		return err
 	}
 
-	script = fmt.Sprintf("window = {}; %s window['AJAX_TOKEN'];", script)
+	window := "{document: {}, setTimeout: (f, t) => {}, setInterval: (f, i) => {}, clearTimeout: (f) => {}, clearInterval: (f) => {}, Map: () => {}}"
+	script = fmt.Sprintf("window = %s; %s window['AJAX_TOKEN'];", window, script)
 
 	v, err := vm.RunString(script)
 	if err != nil {
@@ -103,7 +104,7 @@ func (api *Api) GetServerInfo() (ServerInfo, error) {
 	}
 
 	api.genSec()
-	err = api.extractToken(document)
+	err = api.extractAjaxToken(document)
 
 	return info, err
 }
