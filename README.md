@@ -13,15 +13,25 @@ See [examples](./examples) (easy) or the [CLI source code](./cmd) (advanced). Se
 ### CLI
 This project also comes with a simple command line application to start and stop your server.
 
-Installation & usage:
+Download the binary for your operating system from [releases](https://github.com/sleeyax/aternos-api/releases).
+
+OR:
+
+Manual build & usage instructions:
 ```
-$ go install github.com/sleeyax/aternos-api
-$ aternos-api
+$ git clone https://github.com/sleeyax/aternos-api.git
+$ cd aternos-api
+$ go mod download
+$ go run cm/main.go
 ```
+
+Unfortunately the command `go install github.com/sleeyax/aternos-api@latest` is not supported due to a limitation in go regarding 'replace directives'.
 
 ## Projects
 Projects that are using this package:
 * [sleeyax/aternos-discord-bot](https://github.com/sleeyax/aternos-discord-bot)
+
+Made something cool? Let me know or create a PR to add your project to this list!
 
 ## License
 Licensed under `GNU General Public License v3.0`.

@@ -1,0 +1,31 @@
+name: Publish Binaries
+
+on:
+  release:
+    types: [created]
+jobs:
+  releases-matrix:
+    name: Release Go Binaries
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # build and publish in parallel: linux/386, linux/amd64, linux/arm64, windows/amd64, darwin/amd64, darwin/arm64
+        goos: [ linux, windows, darwin ]
+        goarch: [ amd64, arm64 ]
+        exclude:
+          - goarch: arm64
+            goos: windows
+    steps:
+      - uses: actions/checkout@v2
+      - uses: wangyoucao577/go-release-action@v1.22
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          goos: ${{ matrix.goos }}
+          goarch: ${{ matrix.goarch }}
+          goversion: "1.17"
+          project_path: "./cmd"
+          extra_files: LICENSE README.md TOS.md
+          # see https://github.com/wangyoucao577/go-release-action/issues/68
+          retry: 10
+          overwrite: true
+          binary_name: "aternos-api-cli"
