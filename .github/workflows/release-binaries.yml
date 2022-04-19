@@ -24,7 +24,7 @@ jobs:
           goarch: ${{ matrix.goarch }}
           goversion: "1.17"
           project_path: "./cmd"
-          extra_files: LICENSE README.md TOS.md
+          extra_files: LICENSE README.md
           # see https://github.com/wangyoucao577/go-release-action/issues/68
           retry: 10
           overwrite: true
