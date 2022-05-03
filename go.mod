@@ -5,7 +5,7 @@ go 1.17
 require (
 	github.com/PuerkitoBio/goquery v1.8.0
 	github.com/dop251/goja v0.0.0-20211217115348-3f9136fa235d
-	github.com/gorilla/websocket v1.4.3-0.20220104015952-9111bb834a68
+	github.com/gorilla/websocket v1.5.0
 	github.com/refraction-networking/utls v1.0.0
 	github.com/sleeyax/gotcha v0.0.2
 	github.com/sleeyax/gotcha/adapters/fhttp v0.0.0-20211225143732-1ae0bde30de1
@@ -22,7 +22,7 @@ require (
 	github.com/klauspost/compress v1.13.6 // indirect
 	golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3 // indirect
 	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2 // indirect
-	golang.org/x/sys v0.0.0-20210615035016-665e8c7367d1 // indirect
+	golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c // indirect
 	golang.org/x/text v0.3.6 // indirect
 )
 
