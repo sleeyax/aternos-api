@@ -46,6 +46,7 @@ func New(options *Options) *Api {
 				},
 			},
 		},
+		Proxy: options.Proxy,
 	})
 
 	u, _ := url.Parse(client.Options.PrefixURL)
