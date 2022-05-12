@@ -57,7 +57,8 @@ func main() {
 				Value: *server,
 			},
 		},
-		Proxy: p,
+		Proxy:              p,
+		InsecureSkipVerify: true,
 	})
 
 	// Connect to the Aternos websocket server.

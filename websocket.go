@@ -10,7 +10,6 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"net/url"
 	"time"
 )
 
@@ -206,14 +205,12 @@ func (api *Api) ConnectWebSocket() (*Websocket, error) {
 	headers.Del(httpx.HeaderOrderKey)
 
 	dialer := websocket.Dialer{
-		Proxy: func(request *http.Request) (*url.URL, error) {
-			return api.options.Proxy, nil
-		},
+		Proxy:             http.ProxyURL(api.options.Proxy),
 		HandshakeTimeout:  30 * time.Second,
 		EnableCompression: true,
-		NetDialTLSContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+		ProxyTLSConnection: func(ctx context.Context, proxyConn net.Conn) (net.Conn, error) {
 			adapter := (api.client.Options.Adapter).(*tlsadapter.TLSAdapter)
-			return adapter.DialTLSContext(ctx, network, addr)
+			return adapter.ConnectTLSContext(ctx, proxyConn)
 		},
 		Jar: api.client.Options.CookieJar,
 	}

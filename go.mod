@@ -27,3 +27,5 @@ require (
 )
 
 replace github.com/refraction-networking/utls => github.com/sleeyax/utls v1.1.1
+
+replace github.com/gorilla/websocket => github.com/sleeyax/websocket v1.5.1-0.20220512160613-502bd65db8ae
