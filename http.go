@@ -17,9 +17,6 @@ import (
 // getDocument sends a GET request to the specified url and reads the response as a goquery.Document.
 func (api *Api) getDocument(url string) (*goquery.Document, error) {
 	res, err := api.client.Get(url)
-	if res.StatusCode == http.StatusForbidden {
-		return nil, errors.New("blocked by CloudFlare")
-	}
 
 	if err != nil {
 		return nil, err

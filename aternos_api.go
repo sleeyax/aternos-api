@@ -42,6 +42,9 @@ func New(options *Options) *Api {
 					if location := response.Header.Get("location"); strings.Contains(location, "go") {
 						return response, UnauthenticatedError
 					}
+					if response.StatusCode == http.StatusForbidden {
+						return response, ForbiddenError
+					}
 					return response, nil
 				},
 			},
