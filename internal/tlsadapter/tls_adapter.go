@@ -2,13 +2,11 @@ package tlsadapter
 
 import (
 	"context"
-	"crypto/tls"
 	utls "github.com/refraction-networking/utls"
 	"github.com/sleeyax/gotcha"
 	fhttpadapter "github.com/sleeyax/gotcha/adapters/fhttp"
 	fhttp "github.com/useflyent/fhttp"
 	"net"
-	"net/url"
 )
 
 // TLSAdapter implements a custom gotcha.Adapter with advanced TLS options.
@@ -29,16 +27,29 @@ func New(config *utls.Config) *TLSAdapter {
 // DoRequest executes a HTTP 1 request and returns its response.
 func (ua *TLSAdapter) DoRequest(options *gotcha.Options) (*gotcha.Response, error) {
 	transport := &fhttp.Transport{
-		Proxy: func(*fhttp.Request) (*url.URL, error) {
-			return options.Proxy, nil
+		// NOTE: setting proxy on the Transport is currently broken, see: https://github.com/sleeyax/gotcha/commit/4b06cd561da906d0a570901e90b5bb5c313c1f1b.
+		// We'll use DialTLSContext to connect to the proxy instead.
+		// Proxy: fhttp.ProxyURL(options.Proxy),
+		DialTLSContext: func(ctx context.Context, network string, addr string) (net.Conn, error) {
+			var conn net.Conn
+			var err error
+
+			if options.Proxy != nil {
+				proxyDialer := httpProxyDialer{options.Proxy}
+				conn, err = proxyDialer.Dial(network, addr)
+			} else {
+				conn, err = net.Dial(network, addr)
+			}
+
+			if err != nil {
+				return nil, err
+			}
+
+			return ua.ConnectTLSContext(ctx, conn)
 		},
-		DialTLSContext:      ua.DialTLSContext,
 		MaxConnsPerHost:     1,
 		MaxIdleConns:        1,
 		MaxIdleConnsPerHost: 1,
-		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: ua.Config.InsecureSkipVerify,
-		},
 	}
 
 	adapter := fhttpadapter.Adapter{Transport: transport}
@@ -62,13 +73,4 @@ func (ua *TLSAdapter) ConnectTLSContext(_ context.Context, conn net.Conn) (net.C
 	}
 
 	return uconn, nil
-}
-
-func (ua *TLSAdapter) DialTLSContext(ctx context.Context, network string, addr string) (net.Conn, error) {
-	conn, err := net.Dial(network, addr)
-	if err != nil {
-		return nil, err
-	}
-
-	return ua.ConnectTLSContext(ctx, conn)
 }
