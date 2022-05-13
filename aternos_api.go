@@ -11,7 +11,7 @@ import (
 )
 
 type Api struct {
-	options *Options
+	Options *Options
 	client  *gotcha.Client
 	// ajax security token.
 	sec string
@@ -56,7 +56,7 @@ func New(options *Options) *Api {
 	jar.SetCookies(u, options.Cookies)
 
 	return &Api{
-		options: options,
+		Options: options,
 		client:  client,
 	}
 }

@@ -205,7 +205,7 @@ func (api *Api) ConnectWebSocket() (*Websocket, error) {
 	headers.Del(httpx.HeaderOrderKey)
 
 	dialer := websocket.Dialer{
-		Proxy:             http.ProxyURL(api.options.Proxy),
+		Proxy:             http.ProxyURL(api.Options.Proxy),
 		HandshakeTimeout:  30 * time.Second,
 		EnableCompression: true,
 		ProxyTLSConnection: func(ctx context.Context, proxyConn net.Conn) (net.Conn, error) {
