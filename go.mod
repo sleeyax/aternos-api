@@ -7,9 +7,9 @@ require (
 	github.com/dop251/goja v0.0.0-20211217115348-3f9136fa235d
 	github.com/gorilla/websocket v1.5.0
 	github.com/refraction-networking/utls v1.0.0
-	github.com/sleeyax/gotcha v0.0.2
-	github.com/sleeyax/gotcha/adapters/fhttp v0.0.0-20211225143732-1ae0bde30de1
-	github.com/useflyent/fhttp v0.0.0-20210801005649-f160dd923789
+	github.com/sleeyax/gotcha v0.1.2
+	github.com/sleeyax/gotcha/adapters/fhttp v0.0.0-20220512224245-68a0f6f698d5
+	github.com/useflyent/fhttp v0.0.0-20211004035111-333f430cfbbf
 )
 
 require (
