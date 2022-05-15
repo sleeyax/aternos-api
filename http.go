@@ -235,29 +235,23 @@ func (api *Api) ConnectWebSocket() (*websocket2.Websocket, error) {
 	adapter := (api.client.Options.Adapter).(*tlsadapter.TLSAdapter)
 
 	dialer := websocket.Dialer{
-		HandshakeTimeout:  90 * time.Second,
+		HandshakeTimeout:  75 * time.Second,
 		EnableCompression: true,
 		Jar:               api.client.Options.CookieJar,
 		NetDialTLSContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
-			var conn net.Conn
-			var err error
-
-			if api.Options.Proxy != nil {
-				proxyDialer := tlsadapter.HttpProxyDialer{ProxyURL: api.Options.Proxy}
-				conn, err = proxyDialer.Dial(network, addr)
-			} else {
-				conn, err = net.Dial(network, addr)
-			}
-
-			if err != nil {
-				return nil, err
-			}
-
-			return adapter.ConnectTLS(conn)
+			return adapter.ProxyTLS(network, addr, api.Options.Proxy)
 		},
 	}
 
-	conn, _, err := dialer.Dial("wss://aternos.org/hermes/", headers)
+	var conn *websocket.Conn
+	var err error
+	for i := 0; i < adapter.Retries; i++ {
+		conn, _, err = dialer.Dial("wss://aternos.org/hermes/", headers)
+		if err != nil {
+			continue
+		}
+		break
+	}
 	if err != nil {
 		return nil, err
 	}
