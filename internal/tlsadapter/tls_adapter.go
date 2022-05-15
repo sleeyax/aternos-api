@@ -60,7 +60,7 @@ func (ua *TLSAdapter) ConnectTLS(conn net.Conn) (net.Conn, error) {
 	uconn := utls.UClient(conn, config, ua.Fingerprint)
 
 	if ua.Fingerprint == utls.HelloCustom {
-		if err := uconn.ApplyPreset(GetCustomClientHelloSpec()); err != nil {
+		if err := uconn.ApplyPreset(getCustomClientHelloSpec()); err != nil {
 			return nil, err
 		}
 	}

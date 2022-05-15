@@ -2,9 +2,9 @@ package tlsadapter
 
 import tls "github.com/refraction-networking/utls"
 
-// GetCustomClientHelloSpec returns a custom Chrome 96 spec.
+// getCustomClientHelloSpec returns a custom Chrome 96 spec.
 // Please note that this is a function and not a variable because UTLS doesn't allow this to be shared state.
-func GetCustomClientHelloSpec() *tls.ClientHelloSpec {
+func getCustomClientHelloSpec() *tls.ClientHelloSpec {
 	return &tls.ClientHelloSpec{
 		CipherSuites: []uint16{
 			tls.GREASE_PLACEHOLDER,
