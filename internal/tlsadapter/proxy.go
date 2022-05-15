@@ -9,20 +9,20 @@ import (
 	"net/url"
 )
 
-type httpProxyDialer struct {
+type HttpProxyDialer struct {
 	// HTTP proxy URL to connect to.
-	proxyURL *url.URL
+	ProxyURL *url.URL
 }
 
 // Dial tunnels traffic through the proxy to the destination network:address.
-func (hpd *httpProxyDialer) Dial(network string, address string) (net.Conn, error) {
-	conn, err := net.Dial(network, hpd.proxyURL.Host)
+func (hpd *HttpProxyDialer) Dial(network string, address string) (net.Conn, error) {
+	conn, err := net.Dial(network, hpd.ProxyURL.Host)
 	if err != nil {
 		return nil, err
 	}
 
 	connectHeader := make(http.Header)
-	if user := hpd.proxyURL.User; user != nil {
+	if user := hpd.ProxyURL.User; user != nil {
 		proxyUser := user.Username()
 		if proxyPassword, passwordSet := user.Password(); passwordSet {
 			credential := base64.StdEncoding.EncodeToString([]byte(proxyUser + ":" + proxyPassword))

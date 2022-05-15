@@ -35,7 +35,7 @@ func (ua *TLSAdapter) DoRequest(options *gotcha.Options) (*gotcha.Response, erro
 			var err error
 
 			if options.Proxy != nil {
-				proxyDialer := httpProxyDialer{options.Proxy}
+				proxyDialer := HttpProxyDialer{ProxyURL: options.Proxy}
 				conn, err = proxyDialer.Dial(network, addr)
 			} else {
 				conn, err = net.Dial(network, addr)
@@ -45,11 +45,8 @@ func (ua *TLSAdapter) DoRequest(options *gotcha.Options) (*gotcha.Response, erro
 				return nil, err
 			}
 
-			return ua.ConnectTLSContext(ctx, conn)
+			return ua.ConnectTLS(conn)
 		},
-		MaxConnsPerHost:     1,
-		MaxIdleConns:        1,
-		MaxIdleConnsPerHost: 1,
 	}
 
 	adapter := fhttpadapter.Adapter{Transport: transport}
@@ -57,7 +54,7 @@ func (ua *TLSAdapter) DoRequest(options *gotcha.Options) (*gotcha.Response, erro
 	return adapter.DoRequest(options)
 }
 
-func (ua *TLSAdapter) ConnectTLSContext(_ context.Context, conn net.Conn) (net.Conn, error) {
+func (ua *TLSAdapter) ConnectTLS(conn net.Conn) (net.Conn, error) {
 	config := ua.Config.Clone()
 
 	uconn := utls.UClient(conn, config, ua.Fingerprint)
