@@ -65,7 +65,7 @@ func main() {
 				}
 
 				// Run a goroutine in the background that sends a bunch of keep-alive requests at default intervals.
-				go wss.SendHearthBeats(ctx)
+				go wss.StartHearthBeat(ctx)
 			case "status":
 				// Current server status, containing a bunch of other useful info such as IP address/Dyn IP to connect to, amount of active players, detected problems etc.
 				var info aternos.ServerInfo
@@ -82,6 +82,7 @@ func main() {
 
 			}
 		// Stop the server, close the connection & quit the app when CTRL + C is pressed.
+		// We won't wait for the server to become fully offline before we exit, though.
 		case <-interruptSignal:
 			if err = api.StopServer(); err != nil {
 				log.Println(err)
