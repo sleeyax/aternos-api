@@ -7,7 +7,12 @@ import (
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/dop251/goja"
+	"github.com/gorilla/websocket"
+	"github.com/sleeyax/aternos-api/internal/tlsadapter"
+	websocket2 "github.com/sleeyax/aternos-api/websocket"
+	httpx "github.com/useflyent/fhttp"
 	"log"
+	"net"
 	"net/http"
 	"net/url"
 	"strings"
@@ -216,4 +221,51 @@ func (api *Api) StopServer() error {
 func (api *Api) GetCookies() []*http.Cookie {
 	u, _ := url.Parse(api.client.Options.PrefixURL)
 	return api.client.Options.CookieJar.Cookies(u)
+}
+
+// ConnectWebSocket connects to the Aternos websocket server.
+func (api *Api) ConnectWebSocket() (*websocket2.Websocket, error) {
+	headers := api.client.Options.Headers.Clone()
+	headers.Set("accept", "*/*")
+	headers.Set("cache-control", "no-cache")
+	headers.Set("host", "aternos.org")
+	headers.Set("origin", api.client.Options.PrefixURL)
+	headers.Del(httpx.HeaderOrderKey)
+
+	adapter := (api.client.Options.Adapter).(*tlsadapter.TLSAdapter)
+
+	dialer := websocket.Dialer{
+		HandshakeTimeout:  90 * time.Second,
+		EnableCompression: true,
+		Jar:               api.client.Options.CookieJar,
+		NetDialTLSContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+			var conn net.Conn
+			var err error
+
+			if api.Options.Proxy != nil {
+				proxyDialer := tlsadapter.HttpProxyDialer{ProxyURL: api.Options.Proxy}
+				conn, err = proxyDialer.Dial(network, addr)
+			} else {
+				conn, err = net.Dial(network, addr)
+			}
+
+			if err != nil {
+				return nil, err
+			}
+
+			return adapter.ConnectTLS(conn)
+		},
+	}
+
+	conn, _, err := dialer.Dial("wss://aternos.org/hermes/", headers)
+	if err != nil {
+		return nil, err
+	}
+
+	wss := websocket2.New(conn, func() (*websocket.Conn, error) {
+		conn, _, err := dialer.Dial("wss://aternos.org/hermes/", headers)
+		return conn, err
+	})
+
+	return wss, nil
 }

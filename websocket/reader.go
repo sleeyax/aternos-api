@@ -12,6 +12,7 @@ import (
 func (w *Websocket) startReader() {
 	defer func() {
 		close(w.readerDone)
+		close(w.readerReconnect)
 		close(w.Message)
 	}()
 
@@ -20,7 +21,22 @@ func (w *Websocket) startReader() {
 
 		if err != nil {
 			if websocket.IsCloseError(err, websocket.CloseAbnormalClosure) {
-				log.Println(fmt.Sprintf("reader: server closed the connection unexpectedly [%s]", err))
+				log.Println(fmt.Sprintf("reader: server closed the connection unexpectedly [%s], reconnecting...", err))
+
+				// tell writer to retry the connection
+				w.writerReconnect <- true
+
+				// wait for signal to read first message after reconnect
+				// TODO: what if writer fails to reconnect and never notifies back? perhaps we should use a timout...
+				<-w.readerReconnect
+
+				// skip next "ready" message, so we do'nt start the server and heartbeat again
+				if _, _, err = w.conn.ReadMessage(); err != nil {
+					log.Println(fmt.Sprintf("reader: failed to skip next message [%s]", err))
+					return
+				}
+
+				continue
 			} else if websocket.IsCloseError(err, websocket.CloseNormalClosure) {
 				log.Println(fmt.Sprintf("reader: server closed the connection gracefully [%s]", err))
 			} else {

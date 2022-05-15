@@ -5,6 +5,8 @@ import (
 	"sync"
 )
 
+type RetryFunc func() (*websocket.Conn, error)
+
 // Websocket wraps a gorilla websocket connection and provides a bunch of useful methods for interacting with Aternos' websocket server.
 type Websocket struct {
 	// Whether we are connected to the websocket server.
@@ -20,6 +22,15 @@ type Websocket struct {
 
 	// Received messages channel.
 	Message chan Message
+
+	// Function to call to reconnect the websocket connection.
+	OnReconnect RetryFunc
+
+	// readerReconnect indicates whether the reader should try to reconnect after an abnormal closure.
+	readerReconnect chan bool
+
+	// writerReconnect indicates whether the writer should try to reconnect after an abnormal closure.
+	writerReconnect chan bool
 
 	// Sent messages channel.
 	messageOut chan Message

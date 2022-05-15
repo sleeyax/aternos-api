@@ -1,12 +1,14 @@
 package websocket
 
 import (
+	"fmt"
 	"github.com/gorilla/websocket"
 	"log"
 )
 
 func (w *Websocket) startWriter() {
 	defer close(w.messageOut)
+	defer close(w.writerReconnect)
 
 	for {
 		select {
@@ -21,6 +23,17 @@ func (w *Websocket) startWriter() {
 			}
 
 			return
+		case <-w.writerReconnect:
+			w.conn.Close()
+
+			var err error
+
+			if w.conn, err = w.OnReconnect(); err != nil {
+				log.Println(fmt.Sprintf("reader: failed to reconnect [%s]", err))
+				return
+			}
+
+			w.readerReconnect <- true
 		}
 	}
 }

@@ -7,13 +7,16 @@ import (
 )
 
 // New crates a new Websocket instance from an existing gorilla websocket connection.
-func New(conn *websocket.Conn) *Websocket {
+func New(conn *websocket.Conn, reconnect RetryFunc) *Websocket {
 	ws := &Websocket{
-		readerDone: make(chan interface{}),
-		writerDone: make(chan interface{}),
-		Message:    make(chan Message),
-		messageOut: make(chan Message),
-		conn:       conn,
+		readerDone:      make(chan interface{}),
+		writerDone:      make(chan interface{}),
+		Message:         make(chan Message),
+		messageOut:      make(chan Message),
+		readerReconnect: make(chan bool),
+		writerReconnect: make(chan bool),
+		conn:            conn,
+		OnReconnect:     reconnect,
 	}
 
 	go ws.startReader()
