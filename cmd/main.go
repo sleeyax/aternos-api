@@ -87,7 +87,7 @@ func main() {
 				}
 
 				// Run a goroutine in the background that sends a bunch of keep-alive requests at intervals.
-				go wss.SendHearthBeats(ctx)
+				go wss.StartHearthBeat(ctx)
 			case "status":
 				// Current server status, containing a bunch of other useful info such as IP address/Dyn IP to connect to, amount of active players, detected problems etc.
 				var serverInfo aternos.ServerInfo
