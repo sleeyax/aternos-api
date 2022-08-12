@@ -128,6 +128,14 @@ func (api *Api) StartServer() error {
 
 	defer res.Close()
 
+	if res.StatusCode != 200 {
+		msg := fmt.Sprintf("Unexpected HTTP status code %d (%s)", res.StatusCode, res.Status)
+		fmt.Println(msg)
+		fmt.Println("Response body:")
+		fmt.Println(res.Text())
+		return errors.New(msg)
+	}
+
 	json, err := res.Json()
 	if err != nil {
 		return err
