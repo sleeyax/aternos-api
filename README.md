@@ -22,7 +22,7 @@ Manual build & usage instructions:
 $ git clone https://github.com/sleeyax/aternos-api.git
 $ cd aternos-api
 $ go mod download
-$ go run cm/main.go
+$ go run cmd/main.go
 ```
 
 Unfortunately the command `go install github.com/sleeyax/aternos-api@latest` is not supported due to a limitation in go regarding 'replace directives'.
