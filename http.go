@@ -121,7 +121,7 @@ func (api *Api) StartServer() error {
 		return ServerAlreadyStartedError
 	}
 
-	res, err := api.client.Get(fmt.Sprintf("panel/ajax/start.php?headstart=0&access-credits=0&SEC=%s&TOKEN=%s", api.sec, api.token))
+	res, err := api.client.Get(fmt.Sprintf("ajax/server/start?headstart=false&access-credits=false&SEC=%s&TOKEN=%s", api.sec, api.token))
 	if err != nil {
 		return err
 	}
@@ -187,7 +187,7 @@ func (api *Api) ConfirmServer(ctx context.Context, delay time.Duration) error {
 				break
 			}
 
-			res, err := api.client.Get(fmt.Sprintf("panel/ajax/confirm.php?headstart=0&access-credits=0&SEC=%s&TOKEN=%s", api.sec, api.token))
+			res, err := api.client.Get(fmt.Sprintf("ajax/server/confirm?headstart=false&access-credits=false&SEC=%s&TOKEN=%s", api.sec, api.token))
 			if err != nil {
 				if isAsync {
 					log.Println("Failed to confirm server:", err)
@@ -213,7 +213,7 @@ func (api *Api) StopServer() error {
 		return ServerAlreadyStoppedError
 	}
 
-	_, err = api.client.Get(fmt.Sprintf("panel/ajax/stop.php?SEC=%s&TOKEN=%s", api.sec, api.token))
+	_, err = api.client.Get(fmt.Sprintf("ajax/server/stop?SEC=%s&TOKEN=%s", api.sec, api.token))
 
 	return err
 }
