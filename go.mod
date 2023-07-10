@@ -1,4 +1,4 @@
-module github.com/sleeyax/aternos-api
+module github.com/ganiskowicz/aternos-api
 
 go 1.17
 
