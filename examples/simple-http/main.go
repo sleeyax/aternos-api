@@ -3,7 +3,7 @@
 package main
 
 import (
-	aternos "github.com/sleeyax/aternos-api"
+	aternos "github.com/ganiskowicz/aternos-api"
 	"log"
 	"net/http"
 	"os"

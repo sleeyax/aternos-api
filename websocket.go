@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/websocket"
-	"github.com/sleeyax/aternos-api/internal/tlsadapter"
+	"github.com/ganiskowicz/aternos-api/internal/tlsadapter"
 	httpx "github.com/useflyent/fhttp"
 	"log"
 	"net"
