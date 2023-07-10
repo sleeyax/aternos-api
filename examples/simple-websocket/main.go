@@ -5,7 +5,7 @@ package main
 import (
 	"context"
 	"encoding/json"
-	aternos "github.com/ganiskowicz/aternos-api"
+	aternos "github.com/sleeyax/aternos-api"
 	"log"
 	"net/http"
 	"os"

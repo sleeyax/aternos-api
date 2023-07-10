@@ -2,7 +2,7 @@ package aternos_api
 
 import (
 	tls "github.com/refraction-networking/utls"
-	"github.com/ganiskowicz/aternos-api/internal/tlsadapter"
+	"github.com/sleeyax/aternos-api/internal/tlsadapter"
 	"github.com/sleeyax/gotcha"
 	"net/http"
 	"net/http/cookiejar"

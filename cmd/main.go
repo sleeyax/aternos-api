@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	aternos "github.com/ganiskowicz/aternos-api"
+	aternos "github.com/sleeyax/aternos-api"
 	"log"
 	"net/http"
 	"net/url"
