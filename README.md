@@ -1,3 +1,14 @@
+## !! NO LONGER MAINTAINED !!
+**DO NOT CONTACT ME ABOUT THIS PROJECT YOU WILL BE IGNORED AND LAUGHED AT**
+
+People have been reporting a lot of bans recently and at this point I lack the time and interest to continue maintaining this project as I no longer use Aternos.
+
+If you're a developer and would like to continue this project, feel free to fork it.
+
+If you're a user, please **strongly** consider [exaroton](https://exaroton.com/) instead. It's a reliable Minecraft server hosting solution for dirt cheap by the people behind Aternos and they have an **official** discord bot that (obviously) doesn't break TOS. 
+
+---
+
 # Aternos API
 **Unofficial** [aternos.org](https://aternos.org/) API, initially inspired by the now deprecated [AternosAPI](https://github.com/Duerocraft/AternosAPI) python library. Also 'bypasses' cloudflare without resorting to browser automation or other stupid hacks.
 
